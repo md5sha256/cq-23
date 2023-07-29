@@ -69,6 +69,9 @@ public class Game {
                 JsonObject objectData = entry.getValue().getAsJsonObject();
                 int type = objectData.get("type").getAsInt();
                 ObjectTypes objectType = ObjectTypes.fromId(type);
+                if (objectType == ObjectTypes.POWERUP) {
+                    System.err.println("Registering powerup!");
+                }
                 GameObject gameObject = switch (objectType) {
                     case TANK -> this.serializer.readTank(objectId, objectData);
                     case BULLET -> this.serializer.readBullet(objectId, objectData);
@@ -85,7 +88,6 @@ public class Game {
 
             nextInitMessage = Comms.readMessage();
         }
-        System.err.println(this.gameMap.getObjectsByType(ObjectTypes.CLOSING_BOUNDARY));
         this.eventOrchestrator.registerListener(ChangeEvent.class, new BulletListener());
     }
 
