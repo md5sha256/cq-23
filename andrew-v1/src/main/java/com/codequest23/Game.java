@@ -15,6 +15,7 @@ import com.codequest23.util.DoublePair;
 import com.codequest23.util.GameObjectFactory;
 import com.codequest23.util.MathUtil;
 import com.codequest23.util.Serializer;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -217,7 +218,10 @@ public class Game {
             return false;
         }
         DoublePair position = powerup.shapeComponent().centre();
-        message.addProperty("path", String.format("[%f,%f]", position.x(), position.y()));
+        JsonArray array = new JsonArray();
+        array.add(position.x());
+        array.add(position.y());
+        message.add("path", array);
         return true;
     }
 
@@ -236,7 +240,10 @@ public class Game {
             throw new IllegalStateException("Could not find both tanks");
         }
         DoublePair theirPosition = other.shapeComponent().centre();
-        message.addProperty("path", String.format("[%f,%f]", theirPosition.x(), theirPosition.y()));
+        JsonArray array = new JsonArray();
+        array.add(theirPosition.x());
+        array.add(theirPosition.y());
+        message.add("path", array);
         return true;
     }
 
