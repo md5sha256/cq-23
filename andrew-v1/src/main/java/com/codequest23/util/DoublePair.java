@@ -13,4 +13,5 @@ public record DoublePair(double x, double y) {
         return new double[]{x, y};
     }
 
+
 }

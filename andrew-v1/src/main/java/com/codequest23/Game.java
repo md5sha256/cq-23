@@ -3,17 +3,24 @@ package com.codequest23;
 import com.codequest23.events.ChangeEvent;
 import com.codequest23.events.EventOrchestrator;
 import com.codequest23.logic.BulletListener;
+import com.codequest23.model.ClosingBoundary;
 import com.codequest23.model.GameMap;
 import com.codequest23.model.GameObject;
+import com.codequest23.model.Powerup;
 import com.codequest23.model.Tank;
+import com.codequest23.model.component.BoundingBox;
+import com.codequest23.model.component.ShapeComponent;
 import com.codequest23.util.DefaultGameObjectFactory;
+import com.codequest23.util.DoublePair;
 import com.codequest23.util.GameObjectFactory;
+import com.codequest23.util.MathUtil;
 import com.codequest23.util.Serializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -155,7 +162,6 @@ public class Game {
 
             String id = deletedObjectId.getAsString();
             deletedObjectIds.add(id);
-            //this.objects.remove(id);
         }
 
         Map<String, JsonObject> updatedGameObjects = new HashMap<>();
@@ -166,29 +172,98 @@ public class Game {
                         .getAsJsonObject("message")
                         .getAsJsonObject("updated_objects");
         for (Map.Entry<String, JsonElement> entry : updatedObjects.entrySet()) {
-            String objectId = entry.getKey();
             JsonObject objectData = entry.getValue().getAsJsonObject();
-            //this.objects.put(objectId, objectData);
             updatedGameObjects.put(entry.getKey(), objectData);
         }
 
         ChangeEvent changeEvent = new ChangeEvent(this, deletedObjectIds, updatedGameObjects);
         this.eventOrchestrator.callEvent(changeEvent);
+
+        for (String deleted : deletedObjectIds) {
+            this.gameMap.removeObject(deleted);
+        }
         return true;
     }
 
     public void respondToTurn() {
         // Write your code here... For demonstration, this bot just shoots randomly every turn.
 
-        // Generate a random shoot angle
-        double shootAngle = new Random().nextDouble() * 360;
-
         // Create the message with the shoot angle
         JsonObject message = new JsonObject();
-        message.addProperty("shoot", shootAngle);
-
+        if (!tryChasePowerup(message) && !tryShootEnemyTank(message)) {
+            tryChaseEnemyTank(message);
+        }
         // Send the message
         Comms.postMessage(message);
+    }
+
+    private Powerup findClosestPowerUp() {
+        Tank us = (Tank) this.gameMap.getObject(this.tankId);
+        DoublePair ourPosition = us.shapeComponent().centre();
+        Map<String, GameObject> powerups = this.gameMap.getObjectsByType(ObjectTypes.POWERUP);
+        ClosingBoundary boundary = (ClosingBoundary) this.gameMap.getObjectsByType(ObjectTypes.CLOSING_BOUNDARY).values().iterator().next();
+        ShapeComponent boundaryBoundingBox = boundary.shapeComponent();
+        return powerups.values().stream()
+                .filter(object -> boundaryBoundingBox.intersects(object.shapeComponent().centre()))
+                .sorted(Comparator.comparing(gameObject -> MathUtil.distanceSquared(ourPosition, gameObject.shapeComponent().centre())))
+                .map(Powerup.class::cast)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean tryChasePowerup(JsonObject message) {
+        Powerup powerup = findClosestPowerUp();
+        if (powerup == null) {
+            return false;
+        }
+        DoublePair position = powerup.shapeComponent().centre();
+        message.addProperty("path", String.format("[%f,%f]", position.x(), position.y()));
+        return true;
+    }
+
+    private boolean tryChaseEnemyTank(JsonObject message) {
+        Map<String, GameObject> tanks = this.gameMap.getObjectsByType(ObjectTypes.TANK);
+        Tank us = null;
+        Tank other = null;
+        for (Map.Entry<String, GameObject> entry : tanks.entrySet()) {
+            if (entry.getKey().equals(this.tankId)) {
+                us = (Tank) entry.getValue();
+            } else {
+                other = (Tank) entry.getValue();
+            }
+        }
+        if (us == null || other == null) {
+            throw new IllegalStateException("Could not find both tanks");
+        }
+        DoublePair theirPosition = other.shapeComponent().centre();
+        message.addProperty("path", String.format("[%f,%f]", theirPosition.x(), theirPosition.y()));
+        return true;
+    }
+
+    private boolean tryShootEnemyTank(JsonObject message) {
+        Map<String, GameObject> tanks = this.gameMap.getObjectsByType(ObjectTypes.TANK);
+        Tank us = null;
+        Tank other = null;
+        for (Map.Entry<String, GameObject> entry : tanks.entrySet()) {
+            if (entry.getKey().equals(this.tankId)) {
+                us = (Tank) entry.getValue();
+            } else {
+                other = (Tank) entry.getValue();
+            }
+        }
+        if (us == null || other == null) {
+            throw new IllegalStateException("Could not find both tanks");
+        }
+        DoublePair ourPos = us.shapeComponent().centre();
+        DoublePair theirPos = other.shapeComponent().centre();
+        double distanceSquared = MathUtil.distanceSquared(ourPos, theirPos);
+        // FIXME add check for clear path
+        if (distanceSquared <= 600 * 600) {
+            double angleBetween = MathUtil.angleDegBetween(ourPos, theirPos);
+            message.addProperty("shoot", angleBetween);
+            return true;
+        }
+        return false;
     }
 
     public EventOrchestrator eventOrchestrator() {
