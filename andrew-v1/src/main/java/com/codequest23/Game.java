@@ -69,9 +69,6 @@ public class Game {
                 JsonObject objectData = entry.getValue().getAsJsonObject();
                 int type = objectData.get("type").getAsInt();
                 ObjectTypes objectType = ObjectTypes.fromId(type);
-                if (objectType == ObjectTypes.POWERUP) {
-                    System.err.println("Registering powerup!");
-                }
                 GameObject gameObject = switch (objectType) {
                     case TANK -> this.serializer.readTank(objectId, objectData);
                     case BULLET -> this.serializer.readBullet(objectId, objectData);
@@ -177,6 +174,10 @@ public class Game {
         for (Map.Entry<String, JsonElement> entry : updatedObjects.entrySet()) {
             JsonObject objectData = entry.getValue().getAsJsonObject();
             updatedGameObjects.put(entry.getKey(), objectData);
+            if (objectData.get("type").getAsInt() == ObjectTypes.POWERUP.getValue()) {
+                Powerup powerup = this.serializer.readPowerup(entry.getKey(), objectData);
+                this.gameMap.addObject(powerup);
+            }
         }
 
         ChangeEvent changeEvent = new ChangeEvent(this, deletedObjectIds, updatedGameObjects);
