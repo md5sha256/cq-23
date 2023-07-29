@@ -15,6 +15,19 @@ public enum ObjectTypes {
     this.value = value;
   }
 
+  public static ObjectTypes fromId(int id) {
+    return switch (id) {
+      case 1 -> TANK;
+      case 2 -> BULLET;
+      case 3 -> WALL;
+      case 4 -> DESTRUCTIBLE_WALL;
+      case 5 -> BOUNDARY;
+      case 6 -> CLOSING_BOUNDARY;
+      case 7 -> POWERUP;
+      default -> throw new IllegalArgumentException("Invalid id: " + id);
+    };
+  }
+
   public int getValue() {
     return value;
   }

@@ -1,5 +1,6 @@
 package com.codequest23.util;
 
+import com.codequest23.model.ClosingBoundary;
 import com.codequest23.model.TankAspect;
 import com.codequest23.model.Boundary;
 import com.codequest23.model.Bullet;
@@ -24,7 +25,7 @@ public class Serializer {
         this.gameObjectFactory = gameObjectFactory;
     }
 
-    private Powerup readPowerup(String id, JsonObject object) {
+    public Powerup readPowerup(String id, JsonObject object) {
         DoublePair position = readDoublePair(object.get("position").getAsJsonArray());
         TankAspect aspect = TankAspect.valueOf(object.get("powerup_type").getAsString());
         return this.gameObjectFactory.createPowerup(position)
@@ -33,17 +34,23 @@ public class Serializer {
                 .build();
     }
 
-    private Boundary readBoundary(String id, JsonObject object) {
+    public Boundary readBoundary(String id, JsonObject object) {
         BoundingBox boundingBox = readBoundingBox(object.get("position").getAsJsonArray());
         return new Boundary(id, boundingBox);
     }
 
-    private Wall readWall(String id, JsonObject object) {
+    public ClosingBoundary readClosingBoundary(String id, JsonObject object) {
+        BoundingBox boundingBox = readBoundingBox(object.get("position").getAsJsonArray());
+        DoublePair[] velocities;
+        return new ClosingBoundary(id, boundingBox, new DoublePair[4]);
+    }
+
+    public Wall readWall(String id, JsonObject object) {
         DoublePair position = readDoublePair(object.getAsJsonArray("position"));
         return this.gameObjectFactory.createWall(position).objectId(id).build();
     }
 
-    private DestructibleWall readDestructibleWall(String id, JsonObject object) {
+    public DestructibleWall readDestructibleWall(String id, JsonObject object) {
         DoublePair position = readDoublePair(object.getAsJsonArray("position"));
         int hp = object.get("hp").getAsInt();
         DestructibleWall wall = this.gameObjectFactory.createDestructibleWall(position)
@@ -53,7 +60,7 @@ public class Serializer {
         return wall;
     }
 
-    private Tank readTank(String id, JsonObject object) {
+    public Tank readTank(String id, JsonObject object) {
         DoublePair position = readDoublePair(object.getAsJsonArray("position"));
         DoublePair velocity = readDoublePair(object.getAsJsonArray("velocity"));
         int hp = object.get("hp").getAsInt();
@@ -90,7 +97,7 @@ public class Serializer {
                 .collect(Collectors.toSet());
     }
 
-    private DoublePair readDoublePair(JsonArray jsonArray) {
+    public DoublePair readDoublePair(JsonArray jsonArray) {
         if (jsonArray.size() != 2) {
             throw new IllegalArgumentException("Invalid array size: " + jsonArray);
         }
@@ -99,7 +106,7 @@ public class Serializer {
         return new DoublePair(x, y);
     }
 
-    private BoundingBox readBoundingBox(JsonArray jsonArray) {
+    public BoundingBox readBoundingBox(JsonArray jsonArray) {
         if (jsonArray.size() != 4) {
             throw new IllegalArgumentException("Invalid array size: " + jsonArray);
         }
