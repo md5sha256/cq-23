@@ -17,7 +17,7 @@ public record MoveAction(DoublePair destination) implements OutboundMessage {
         JsonArray array = new JsonArray();
         array.add(destination.x());
         array.add(destination.y());
-        jsonObject.add("path", jsonObject);
+        jsonObject.add("path", array);
         return jsonObject;
     }
 }

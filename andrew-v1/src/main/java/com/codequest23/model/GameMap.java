@@ -5,6 +5,8 @@ import com.codequest23.model.component.BoundingBox;
 import com.codequest23.util.DoublePair;
 import com.codequest23.util.MathUtil;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -59,6 +61,16 @@ public class GameMap {
 
     public Stream<GameObject> streamObjectsByType(ObjectTypes types) {
         return this.typeCache.get(types).values().stream();
+    }
+
+    public Stream<GameObject> streamObjects() {
+        return this.objects.values().stream();
+    }
+
+    public Stream<GameObject> streamWallObjects() {
+        Collection<GameObject> gameObjects = new ArrayList<>(this.typeCache.get(ObjectTypes.WALL).values());
+        gameObjects.addAll(this.typeCache.get(ObjectTypes.DESTRUCTIBLE_WALL).values());
+        return gameObjects.stream();
     }
 
     public boolean isWithinBounds(GameObject gameObject) {

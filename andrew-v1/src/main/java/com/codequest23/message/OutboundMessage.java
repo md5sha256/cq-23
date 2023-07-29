@@ -6,7 +6,6 @@ public interface OutboundMessage {
 
     OutboundMessage EMPTY_RESPONSE = new EmptyMessage();
 
-
     Action action();
 
     JsonObject toJson();

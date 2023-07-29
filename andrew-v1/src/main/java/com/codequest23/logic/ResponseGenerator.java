@@ -11,11 +11,14 @@ public interface ResponseGenerator {
 
     static ResponseGenerator chain(ResponseGenerator first, ResponseGenerator... next) {
         if (next == null || next.length == 0) {
-            first.nextGenerator(null);
+            first.nextGenerator(EMPTY);
             return first;
         }
         ResponseGenerator current = first;
         for (ResponseGenerator generator : next) {
+            if (current == generator) {
+                continue;
+            }
             current.nextGenerator(generator);
             current = generator;
         }

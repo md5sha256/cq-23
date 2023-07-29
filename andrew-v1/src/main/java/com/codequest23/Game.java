@@ -2,10 +2,16 @@ package com.codequest23;
 
 import com.codequest23.events.ChangeEvent;
 import com.codequest23.events.EventOrchestrator;
+import com.codequest23.logic.BulletDodgeResponse;
 import com.codequest23.logic.BulletListener;
+import com.codequest23.logic.ChaseEnemyResponse;
 import com.codequest23.logic.ChasePowerupResponse;
+import com.codequest23.logic.ClosingWallResponse;
+import com.codequest23.logic.DirectShotStrategy;
 import com.codequest23.logic.ResponseGenerator;
 import com.codequest23.logic.ShootEnemyResponse;
+import com.codequest23.message.Action;
+import com.codequest23.message.MoveAction;
 import com.codequest23.message.OutboundMessage;
 import com.codequest23.model.Bullet;
 import com.codequest23.model.ClosingBoundary;
@@ -29,6 +35,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class Game {
     private final EventOrchestrator eventOrchestrator = new EventOrchestrator();
@@ -92,6 +99,10 @@ public class Game {
         this.eventOrchestrator.registerListener(ChangeEvent.class, new BulletListener());
     }
 
+    public boolean canShootThisTick() {
+        return this.lastOutboundMessage == null || this.lastOutboundMessage.action() != Action.SHOOT;
+    }
+
     public boolean readNextTurnData() {
         // Read the next turn message
         JsonElement currentTurnMessage = Comms.readMessage();
@@ -144,13 +155,32 @@ public class Game {
 
     public void respondToTurn() {
         // Write your code here... For demonstration, this bot just shoots randomly every turn.
-
+        long timeNow = System.nanoTime();
         // Create the message with the shoot angle
-        OutboundMessage message = ResponseGenerator.chain(new ChasePowerupResponse(), new ShootEnemyResponse(), new ChasePowerupResponse())
-                .generateMessage(this).orElse(OutboundMessage.EMPTY_RESPONSE);
-
+        ResponseGenerator wallChecker = new ClosingWallResponse(100);
+        OutboundMessage message = ResponseGenerator.chain(
+                        new BulletDodgeResponse(50),
+                        new ShootEnemyResponse(600),
+                        new ChasePowerupResponse(),
+                        new ShootEnemyResponse(1000),
+                        new ChaseEnemyResponse())
+                .generateMessage(this)
+                .orElseGet(() -> wallChecker.generateMessage(this).orElse(OutboundMessage.EMPTY_RESPONSE));
+        if (message instanceof MoveAction nextMessage
+                && lastOutboundMessage instanceof MoveAction lastMessage
+                && nextMessage.destination().equals(lastMessage.destination())) {
+            // If we are already moving, try to take a shot if possible
+            message = new ShootEnemyResponse(1000, new DirectShotStrategy(true))
+                    .generateMessage(this)
+                    .orElseGet(() -> wallChecker.generateMessage(this).orElse(OutboundMessage.EMPTY_RESPONSE));
+        }
         // Send the message
         Comms.postMessage(message.toJson());
+        long elapsed = System.nanoTime() - timeNow;
+        if (elapsed > TimeUnit.MILLISECONDS.toNanos(100)) {
+            System.err.println("Exceeded time limit: " + TimeUnit.NANOSECONDS.toMillis(elapsed));
+        }
+        this.lastOutboundMessage = message;
     }
 
     private Powerup findClosestPowerUp() {
