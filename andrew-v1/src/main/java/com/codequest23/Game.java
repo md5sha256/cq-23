@@ -205,7 +205,6 @@ public class Game {
         Tank us = (Tank) this.gameMap.getObject(this.tankId);
         DoublePair ourPosition = us.shapeComponent().centre();
         Map<String, GameObject> powerups = this.gameMap.getObjectsByType(ObjectTypes.POWERUP);
-        System.err.println(powerups);
         ClosingBoundary boundary = (ClosingBoundary) this.gameMap.getObjectsByType(ObjectTypes.CLOSING_BOUNDARY).values().iterator().next();
         System.err.println(boundary.shapeComponent().toString());
         ShapeComponent boundaryBoundingBox = boundary.shapeComponent();
@@ -221,6 +220,7 @@ public class Game {
     private boolean tryChasePowerup(JsonObject message) {
         Powerup powerup = findClosestPowerUp();
         if (powerup == null) {
+            System.err.println("No powerup found");
             return false;
         }
         DoublePair position = powerup.shapeComponent().centre();
