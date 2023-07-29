@@ -1,22 +1,20 @@
 package com.codequest23.model;
 
 import com.codequest23.model.component.HealthComponent;
-import com.codequest23.model.component.SimpleHealthComponent;
+import com.codequest23.model.component.Hitbox;
 import com.codequest23.util.DoublePair;
-import com.codequest23.model.component.ShapeComponent;
 
 import java.util.Set;
 
 public final class TankBuilder {
-    private final ShapeComponent shapeComponent;
-    private String objectId;
+    private final Hitbox hitbox;
     private final HealthComponent healthComponent = new SimpleHealthComponent(0);
-
+    private String objectId;
     private DoublePair velocity;
     private Set<TankAspect> activePowerups;
 
-    public TankBuilder(ShapeComponent shapeComponent) {
-        this.shapeComponent = shapeComponent;
+    public TankBuilder(Hitbox hitbox) {
+        this.hitbox = hitbox;
     }
 
     public TankBuilder objectId(String objectId) {
@@ -35,6 +33,6 @@ public final class TankBuilder {
     }
 
     public Tank build() {
-        return new Tank(objectId, velocity, shapeComponent, healthComponent, activePowerups);
+        return new Tank(objectId, velocity, hitbox, healthComponent, activePowerups);
     }
 }

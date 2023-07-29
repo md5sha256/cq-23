@@ -1,18 +1,17 @@
 package com.codequest23.model;
 
+import com.codequest23.model.component.Hitbox;
 import com.codequest23.util.DoublePair;
-import com.codequest23.model.component.ShapeComponent;
 
 public final class BulletBuilder {
+    private final Hitbox hitbox;
     private String tankId;
     private String objectId;
     private DoublePair velocity;
     private int damage;
 
-    private final ShapeComponent shapeComponent;
-
-    public BulletBuilder(ShapeComponent shapeComponent) {
-        this.shapeComponent = shapeComponent;
+    public BulletBuilder(Hitbox hitbox) {
+        this.hitbox = hitbox;
     }
 
     public BulletBuilder objectId(String objectId) {
@@ -36,6 +35,6 @@ public final class BulletBuilder {
     }
 
     public Bullet build() {
-        return new Bullet(objectId, tankId, velocity, damage, shapeComponent);
+        return new Bullet(objectId, tankId, damage, velocity, hitbox);
     }
 }

@@ -1,8 +1,7 @@
 package com.codequest23.model;
 
-import com.codequest23.model.component.InteractionComponent;
 import com.codequest23.ObjectTypes;
-import com.codequest23.model.component.ShapeComponent;
+import com.codequest23.model.component.Hitbox;
 
 public interface GameObject {
 
@@ -10,10 +9,8 @@ public interface GameObject {
 
     ObjectTypes objectType();
 
-    ShapeComponent shapeComponent();
+    Hitbox hitbox();
 
-    default InteractionComponent collisionComponent() {
-        return shapeComponent()::intersects;
-    }
+    void hitbox(Hitbox hitbox);
 
 }

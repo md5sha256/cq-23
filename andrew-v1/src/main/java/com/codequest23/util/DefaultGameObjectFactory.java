@@ -6,13 +6,13 @@ import com.codequest23.model.PowerupBuilder;
 import com.codequest23.model.TankBuilder;
 import com.codequest23.model.WallBuilder;
 import com.codequest23.model.component.BoundingBox;
-import com.codequest23.model.component.CircularShapeComponent;
+import com.codequest23.model.component.CircularHitbox;
 
 public class DefaultGameObjectFactory implements GameObjectFactory {
 
     @Override
     public BulletBuilder createBullet(DoublePair position) {
-        return new BulletBuilder(new CircularShapeComponent(position,5));
+        return new BulletBuilder(new CircularHitbox(position, 5));
     }
 
     @Override
@@ -27,7 +27,7 @@ public class DefaultGameObjectFactory implements GameObjectFactory {
 
     @Override
     public PowerupBuilder createPowerup(DoublePair position) {
-        return new PowerupBuilder(new CircularShapeComponent(position, 15));
+        return new PowerupBuilder(new CircularHitbox(position, 15));
     }
 
     @Override

@@ -8,8 +8,7 @@ import com.codequest23.model.GameMap;
 import com.codequest23.model.GameObject;
 import com.codequest23.model.Powerup;
 import com.codequest23.model.Tank;
-import com.codequest23.model.component.BoundingBox;
-import com.codequest23.model.component.ShapeComponent;
+import com.codequest23.model.component.Hitbox;
 import com.codequest23.util.DefaultGameObjectFactory;
 import com.codequest23.util.DoublePair;
 import com.codequest23.util.GameObjectFactory;
@@ -24,21 +23,17 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 public class Game {
+    private final EventOrchestrator eventOrchestrator = new EventOrchestrator();
+    private final GameObjectFactory gameObjectFactory = new DefaultGameObjectFactory();
+    private final Serializer serializer = new Serializer(this.gameObjectFactory);
+    private final GameMap gameMap = new GameMap();
     private String tankId;
     private Map<String, JsonObject> objects;
     private double width;
     private double height;
     private JsonElement currentTurnMessage;
-
-    private final EventOrchestrator eventOrchestrator = new EventOrchestrator();
-
-    private final GameObjectFactory gameObjectFactory = new DefaultGameObjectFactory();
-    private final Serializer serializer = new Serializer(this.gameObjectFactory);
-
-    private final GameMap gameMap = new GameMap();
 
     public Game() {
         readModern();
@@ -47,12 +42,16 @@ public class Game {
     private void readModern() {
         // Read the tank ID message
         JsonElement tankIdMessage = Comms.readMessage();
-        this.tankId =
-                tankIdMessage
-                        .getAsJsonObject()
-                        .getAsJsonObject("message")
-                        .get("your-tank-id")
-                        .getAsString();
+        String friendlyTankId = tankIdMessage.getAsJsonObject()
+                .getAsJsonObject("message")
+                .get("your-tank-id")
+                .getAsString();
+
+        String enemyTankId = tankIdMessage.getAsJsonObject()
+                .getAsJsonObject("message")
+                .get("enemy-tank-id")
+                .getAsString();
+
         // Read the initialization messages until the end signal is received
         JsonElement nextInitMessage = Comms.readMessage();
         while (!nextInitMessage.isJsonPrimitive()
@@ -81,66 +80,16 @@ public class Game {
                 if (gameObject != null) {
                     this.gameMap.addObject(gameObject);
                 }
-            }
-
-            nextInitMessage = Comms.readMessage();
-        }
-        this.eventOrchestrator.registerListener(ChangeEvent.class, new BulletListener());
-    }
-
-    private void readLegacy() {
-        // Read the tank ID message
-        JsonElement tankIdMessage = Comms.readMessage();
-        this.tankId =
-                tankIdMessage
-                        .getAsJsonObject()
-                        .getAsJsonObject("message")
-                        .get("your-tank-id")
-                        .getAsString();
-
-        this.currentTurnMessage = null;
-        this.objects = new HashMap<>();
-
-        // Read the initialization messages until the end signal is received
-        JsonElement nextInitMessage = Comms.readMessage();
-        while (!nextInitMessage.isJsonPrimitive()
-                || !nextInitMessage.getAsString().equals(Comms.END_INIT_SIGNAL)) {
-            JsonObject objectInfo =
-                    nextInitMessage
-                            .getAsJsonObject()
-                            .getAsJsonObject("message")
-                            .getAsJsonObject("updated_objects");
-
-            // Store the object information in the map
-            for (Map.Entry<String, JsonElement> entry : objectInfo.entrySet()) {
-                String objectId = entry.getKey();
-                JsonObject objectData = entry.getValue().getAsJsonObject();
-                objects.put(objectId, objectData);
-            }
-
-            nextInitMessage = Comms.readMessage();
-        }
-
-        // Find the boundaries to determine the map size
-        double biggestX = Double.MIN_VALUE;
-        double biggestY = Double.MIN_VALUE;
-
-        for (JsonObject gameObject : objects.values()) {
-            int objectType = gameObject.get("type").getAsInt();
-            if (objectType == ObjectTypes.BOUNDARY.getValue()) {
-                // Parse the position array
-                double[][] position = GameUtils.parsePosition(gameObject.get("position").getAsJsonArray());
-                for (double[] singlePosition : position) {
-                    // Update the biggestX and biggestY values
-                    biggestX = Math.max(biggestX, singlePosition[0]);
-                    biggestY = Math.max(biggestY, singlePosition[1]);
+                if (gameObject instanceof ClosingBoundary closingBoundary) {
+                    this.gameMap.setBoundary(closingBoundary);
                 }
             }
-        }
 
-        // Set the width and height of the map
-        this.width = biggestX;
-        this.height = biggestY;
+            nextInitMessage = Comms.readMessage();
+        }
+        this.gameMap.setFriendlyTank((Tank) this.gameMap.getObject(friendlyTankId));
+        this.gameMap.setEnemyTank((Tank) this.gameMap.getObject(enemyTankId));
+        this.eventOrchestrator.registerListener(ChangeEvent.class, new BulletListener());
     }
 
     public boolean readNextTurnData() {
@@ -203,14 +152,13 @@ public class Game {
 
     private Powerup findClosestPowerUp() {
         Tank us = (Tank) this.gameMap.getObject(this.tankId);
-        DoublePair ourPosition = us.shapeComponent().centre();
+        DoublePair ourPosition = us.hitbox().centre();
         Map<String, GameObject> powerups = this.gameMap.getObjectsByType(ObjectTypes.POWERUP);
         ClosingBoundary boundary = (ClosingBoundary) this.gameMap.getObjectsByType(ObjectTypes.CLOSING_BOUNDARY).values().iterator().next();
-        System.err.println(boundary.shapeComponent().toString());
-        ShapeComponent boundaryBoundingBox = boundary.shapeComponent();
-        Comparator<GameObject> distanceComparator = Comparator.comparing(gameObject -> MathUtil.distanceSquared(ourPosition, gameObject.shapeComponent().centre()));
+        Hitbox boundaryBoundingBox = boundary.hitbox();
+        Comparator<GameObject> distanceComparator = Comparator.comparing(gameObject -> MathUtil.distanceSquared(ourPosition, gameObject.hitbox().centre()));
         return powerups.values().stream()
-                .filter(object -> boundaryBoundingBox.intersects(object.shapeComponent().centre()))
+                .filter(object -> boundaryBoundingBox.intersects(object.hitbox().centre()))
                 .sorted(distanceComparator.reversed())
                 .map(Powerup.class::cast)
                 .findFirst()
@@ -220,10 +168,9 @@ public class Game {
     private boolean tryChasePowerup(JsonObject message) {
         Powerup powerup = findClosestPowerUp();
         if (powerup == null) {
-            System.err.println("No powerup found");
             return false;
         }
-        DoublePair position = powerup.shapeComponent().centre();
+        DoublePair position = powerup.hitbox().centre();
         JsonArray array = new JsonArray();
         array.add(position.x());
         array.add(position.y());
@@ -245,7 +192,7 @@ public class Game {
         if (us == null || other == null) {
             throw new IllegalStateException("Could not find both tanks");
         }
-        DoublePair theirPosition = other.shapeComponent().centre();
+        DoublePair theirPosition = other.hitbox().centre();
         JsonArray array = new JsonArray();
         array.add(theirPosition.x());
         array.add(theirPosition.y());
@@ -267,8 +214,8 @@ public class Game {
         if (us == null || other == null) {
             throw new IllegalStateException("Could not find both tanks");
         }
-        DoublePair ourPos = us.shapeComponent().centre();
-        DoublePair theirPos = other.shapeComponent().centre();
+        DoublePair ourPos = us.hitbox().centre();
+        DoublePair theirPos = other.hitbox().centre();
         double distanceSquared = MathUtil.distanceSquared(ourPos, theirPos);
         // FIXME add check for clear path
         if (distanceSquared <= 600 * 600) {

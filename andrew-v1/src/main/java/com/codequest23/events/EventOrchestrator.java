@@ -1,7 +1,5 @@
 package com.codequest23.events;
 
-import com.codequest23.model.GameObject;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

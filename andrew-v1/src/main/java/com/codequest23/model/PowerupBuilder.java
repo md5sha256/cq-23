@@ -1,14 +1,14 @@
 package com.codequest23.model;
 
-import com.codequest23.model.component.ShapeComponent;
+import com.codequest23.model.component.Hitbox;
 
 public final class PowerupBuilder {
+    private final Hitbox hitbox;
     private String objectId;
     private TankAspect tankAspect;
-    private final ShapeComponent shapeComponent;
 
-    public PowerupBuilder(ShapeComponent shapeComponent) {
-        this.shapeComponent = shapeComponent;
+    public PowerupBuilder(Hitbox hitbox) {
+        this.hitbox = hitbox;
     }
 
 
@@ -23,6 +23,6 @@ public final class PowerupBuilder {
     }
 
     public Powerup build() {
-        return new Powerup(objectId, tankAspect, shapeComponent);
+        return new Powerup(objectId, tankAspect, hitbox);
     }
 }

@@ -2,7 +2,7 @@ package com.codequest23.model.component;
 
 import com.codequest23.util.DoublePair;
 
-public class BoundingBox implements ShapeComponent {
+public class BoundingBox implements Hitbox {
 
     private final DoublePair centre;
     private final double maxX;
@@ -74,18 +74,24 @@ public class BoundingBox implements ShapeComponent {
     public boolean intersects(DoublePair position) {
         double x = position.x();
         double y = position.y();
-        return x <= this.maxX && x >= this.minX
-                && y <= this.maxY && y >= this.minY;
+        return x >= this.minX && x <= this.maxX && y >= this.minY && y <= this.maxY;
     }
 
     @Override
     public String toString() {
-        return "QuadrilateralHitRegion{" +
+        return "BoundingBox{" +
                 ", centre=" + centre +
                 ", maxX=" + maxX +
                 ", maxY=" + maxY +
                 ", minX=" + minX +
                 ", minY=" + minY +
                 '}';
+    }
+
+    @Override
+    public Hitbox reCentered(DoublePair centre) {
+        double xWidth = this.maxX - this.minX;
+        double yWidth = this.maxY - this.minY;
+        return BoundingBox.ofRectangle(xWidth, yWidth, centre);
     }
 }

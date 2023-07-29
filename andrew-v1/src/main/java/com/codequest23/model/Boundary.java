@@ -2,17 +2,17 @@ package com.codequest23.model;
 
 import com.codequest23.ObjectTypes;
 import com.codequest23.model.component.BoundingBox;
-import com.codequest23.model.component.ShapeComponent;
+import com.codequest23.model.component.Hitbox;
 
 public class Boundary implements GameObject {
 
     private final String objectId;
 
-    private final BoundingBox boundingBox;
+    private Hitbox hitbox;
 
-    public Boundary(String objectId, BoundingBox boundingBox) {
+    public Boundary(String objectId, BoundingBox hitbox) {
         this.objectId = objectId;
-        this.boundingBox = boundingBox;
+        this.hitbox = hitbox;
     }
 
     @Override
@@ -26,7 +26,12 @@ public class Boundary implements GameObject {
     }
 
     @Override
-    public ShapeComponent shapeComponent() {
-        return this.boundingBox;
+    public Hitbox hitbox() {
+        return this.hitbox;
+    }
+
+    @Override
+    public void hitbox(Hitbox hitbox) {
+        this.hitbox = hitbox;
     }
 }

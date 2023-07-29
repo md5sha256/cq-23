@@ -9,13 +9,42 @@ import java.util.Map;
 
 public class GameMap {
 
-    private final Map<String, GameObject> objects =  new HashMap<>();
+    private final Map<String, GameObject> objects = new HashMap<>();
     private final Map<ObjectTypes, Map<String, GameObject>> typeCache = new EnumMap<>(ObjectTypes.class);
+
+    private Tank friendlyTank;
+    private Tank enemyTank;
+
+    private ClosingBoundary boundary;
 
     public GameMap() {
         for (ObjectTypes type : ObjectTypes.values()) {
             typeCache.put(type, new HashMap<>());
         }
+    }
+
+    public Tank friendlyTank() {
+        return this.friendlyTank;
+    }
+
+    public void setFriendlyTank(Tank friendlyTank) {
+        this.friendlyTank = friendlyTank;
+    }
+
+    public Tank enemyTank() {
+        return this.enemyTank;
+    }
+
+    public void setEnemyTank(Tank enemyTank) {
+        this.enemyTank = enemyTank;
+    }
+
+    public ClosingBoundary boundary() {
+        return this.boundary;
+    }
+
+    public void setBoundary(ClosingBoundary boundary) {
+        this.boundary = boundary;
     }
 
     public Map<String, GameObject> getObjectsByType(ObjectTypes type) {

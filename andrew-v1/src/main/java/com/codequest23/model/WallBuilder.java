@@ -1,13 +1,13 @@
 package com.codequest23.model;
 
-import com.codequest23.model.component.ShapeComponent;
+import com.codequest23.model.component.Hitbox;
 
 public final class WallBuilder {
+    private final Hitbox hitbox;
     private String objectId;
-    private final ShapeComponent shapeComponent;
 
-    public WallBuilder(ShapeComponent shapeComponent) {
-        this.shapeComponent = shapeComponent;
+    public WallBuilder(Hitbox hitbox) {
+        this.hitbox = hitbox;
     }
 
     public WallBuilder objectId(String objectId) {
@@ -16,6 +16,6 @@ public final class WallBuilder {
     }
 
     public Wall build() {
-        return new Wall(objectId, shapeComponent);
+        return new Wall(objectId, hitbox);
     }
 }

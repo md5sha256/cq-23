@@ -1,16 +1,15 @@
 package com.codequest23.model;
 
 import com.codequest23.model.component.HealthComponent;
-import com.codequest23.model.component.SimpleHealthComponent;
-import com.codequest23.model.component.ShapeComponent;
+import com.codequest23.model.component.Hitbox;
 
 public final class DestructibleWallBuilder {
-    private String objectId;
-    private final ShapeComponent shapeComponent;
+    private final Hitbox hitbox;
     private final HealthComponent healthComponent = new SimpleHealthComponent(0);
+    private String objectId;
 
-    public DestructibleWallBuilder(ShapeComponent shapeComponent) {
-        this.shapeComponent = shapeComponent;
+    public DestructibleWallBuilder(Hitbox hitbox) {
+        this.hitbox = hitbox;
     }
 
     public DestructibleWallBuilder objectId(String objectId) {
@@ -19,6 +18,6 @@ public final class DestructibleWallBuilder {
     }
 
     public DestructibleWall build() {
-        return new DestructibleWall(objectId, shapeComponent, healthComponent);
+        return new DestructibleWall(objectId, hitbox, healthComponent);
     }
 }

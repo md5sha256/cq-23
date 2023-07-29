@@ -1,14 +1,15 @@
 package com.codequest23.util;
 
-import com.codequest23.model.ClosingBoundary;
-import com.codequest23.model.TankAspect;
 import com.codequest23.model.Boundary;
 import com.codequest23.model.Bullet;
+import com.codequest23.model.ClosingBoundary;
 import com.codequest23.model.DestructibleWall;
 import com.codequest23.model.Powerup;
 import com.codequest23.model.Tank;
+import com.codequest23.model.TankAspect;
 import com.codequest23.model.Wall;
 import com.codequest23.model.component.BoundingBox;
+import com.codequest23.model.component.Hitbox;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -45,6 +46,11 @@ public class Serializer {
         return new ClosingBoundary(id, boundingBox, new DoublePair[4]);
     }
 
+    public void updateClosingBoundary(ClosingBoundary existing, JsonObject update) {
+        BoundingBox updated = readBoundingBox(update.get("position").getAsJsonArray());
+        existing.hitboxComponent().value(updated);
+    }
+
     public Wall readWall(String id, JsonObject object) {
         DoublePair position = readDoublePair(object.getAsJsonArray("position"));
         return this.gameObjectFactory.createWall(position).objectId(id).build();
@@ -60,6 +66,16 @@ public class Serializer {
         return wall;
     }
 
+    public void updateDestructibleWall(DestructibleWall existing, JsonObject update) {
+        if (update.has("position")) {
+            BoundingBox updated = readBoundingBox(update.get("position").getAsJsonArray());
+            existing.hitboxComponent().value(updated);
+        }
+        if (update.has("hp")) {
+            existing.healthComponent().health(update.get("hp").getAsInt());
+        }
+    }
+
     public Tank readTank(String id, JsonObject object) {
         DoublePair position = readDoublePair(object.getAsJsonArray("position"));
         DoublePair velocity = readDoublePair(object.getAsJsonArray("velocity"));
@@ -73,6 +89,25 @@ public class Serializer {
         return tank;
     }
 
+    public void updateTank(Tank existing, JsonObject update) {
+        if (update.has("position")) {
+            DoublePair updated = readDoublePair(update.get("position").getAsJsonArray());
+            Hitbox existingHitbox = existing.hitboxComponent().value();
+            existing.hitboxComponent().value(existingHitbox.reCentered(updated));
+        }
+        if (update.has("velocity")) {
+            DoublePair updated = readDoublePair(update.get("velocity").getAsJsonArray());
+            existing.velocityComponent().value(updated);
+        }
+        if (update.has("hp")) {
+            existing.healthComponent().health(update.get("hp").getAsInt());
+        }
+        if (update.has("powerups")) {
+            Set<TankAspect> aspects = readTankAspects(update.getAsJsonArray("powerups"));
+            existing.powerupsComponent().value(aspects);
+        }
+    }
+
     public Bullet readBullet(String id, JsonObject object) {
         String tankId = object.get("tank_id").getAsString();
         DoublePair position = readDoublePair(object.getAsJsonArray("position"));
@@ -84,7 +119,22 @@ public class Serializer {
                 .velocity(velocity)
                 .damage(damage)
                 .build();
+    }
 
+    public void updateBullet(Bullet existing, JsonObject update) {
+        if (update.has("position")) {
+            DoublePair updated = readDoublePair(update.get("position").getAsJsonArray());
+            Hitbox existingHitbox = existing.hitboxComponent().value();
+            existing.hitboxComponent().value(existingHitbox.reCentered(updated));
+        }
+        if (update.has("velocity")) {
+            DoublePair updated = readDoublePair(update.get("velocity").getAsJsonArray());
+            existing.velocityComponent().value(updated);
+        }
+        if (update.has("damage")) {
+            int damage = update.get("damage").getAsInt();
+            existing.damageComponent().value(damage);
+        }
     }
 
     public Set<TankAspect> readTankAspects(JsonArray array) {
@@ -110,7 +160,7 @@ public class Serializer {
         if (jsonArray.size() != 4) {
             throw new IllegalArgumentException("Invalid array size: " + jsonArray);
         }
-        DoublePair bottomLeft = readDoublePair(jsonArray.get(0).getAsJsonArray());
+        DoublePair bottomLeft = readDoublePair(jsonArray.get(1).getAsJsonArray());
         DoublePair topRight = readDoublePair(jsonArray.get(3).getAsJsonArray());
         return BoundingBox.ofCorners(bottomLeft, topRight);
     }

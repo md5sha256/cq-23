@@ -5,7 +5,6 @@ import com.codequest23.model.DestructibleWallBuilder;
 import com.codequest23.model.PowerupBuilder;
 import com.codequest23.model.TankBuilder;
 import com.codequest23.model.WallBuilder;
-import com.codequest23.util.DoublePair;
 
 public interface GameObjectFactory {
 
