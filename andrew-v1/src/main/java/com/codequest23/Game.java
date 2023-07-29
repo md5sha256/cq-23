@@ -204,9 +204,10 @@ public class Game {
         Map<String, GameObject> powerups = this.gameMap.getObjectsByType(ObjectTypes.POWERUP);
         ClosingBoundary boundary = (ClosingBoundary) this.gameMap.getObjectsByType(ObjectTypes.CLOSING_BOUNDARY).values().iterator().next();
         ShapeComponent boundaryBoundingBox = boundary.shapeComponent();
+        Comparator<GameObject> distanceComparator = Comparator.comparing(gameObject -> MathUtil.distanceSquared(ourPosition, gameObject.shapeComponent().centre()));
         return powerups.values().stream()
                 .filter(object -> boundaryBoundingBox.intersects(object.shapeComponent().centre()))
-                .sorted(Comparator.comparing(gameObject -> MathUtil.distanceSquared(ourPosition, gameObject.shapeComponent().centre())))
+                .sorted(distanceComparator.reversed())
                 .map(Powerup.class::cast)
                 .findFirst()
                 .orElse(null);
