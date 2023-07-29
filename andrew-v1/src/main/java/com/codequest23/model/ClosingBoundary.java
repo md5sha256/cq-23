@@ -1,5 +1,6 @@
 package com.codequest23.model;
 
+import com.codequest23.ObjectTypes;
 import com.codequest23.model.component.BoundingBox;
 import com.codequest23.util.DoublePair;
 
@@ -14,5 +15,8 @@ public class ClosingBoundary extends Boundary implements GameObject {
         this.velocity = velocities;
     }
 
-
+    @Override
+    public ObjectTypes objectType() {
+        return ObjectTypes.CLOSING_BOUNDARY;
+    }
 }
