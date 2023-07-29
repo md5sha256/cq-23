@@ -3,7 +3,13 @@ package com.codequest23;
 import com.codequest23.events.ChangeEvent;
 import com.codequest23.events.EventOrchestrator;
 import com.codequest23.logic.BulletListener;
+import com.codequest23.logic.ChasePowerupResponse;
+import com.codequest23.logic.ResponseGenerator;
+import com.codequest23.logic.ShootEnemyResponse;
+import com.codequest23.message.OutboundMessage;
+import com.codequest23.model.Bullet;
 import com.codequest23.model.ClosingBoundary;
+import com.codequest23.model.DestructibleWall;
 import com.codequest23.model.GameMap;
 import com.codequest23.model.GameObject;
 import com.codequest23.model.Powerup;
@@ -33,10 +39,14 @@ public class Game {
     private Map<String, JsonObject> objects;
     private double width;
     private double height;
-    private JsonElement currentTurnMessage;
+    private OutboundMessage lastOutboundMessage;
 
     public Game() {
         readModern();
+    }
+
+    public OutboundMessage lastOutboundMessage() {
+        return this.lastOutboundMessage;
     }
 
     private void readModern() {
@@ -66,17 +76,7 @@ public class Game {
             for (Map.Entry<String, JsonElement> entry : objectInfo.entrySet()) {
                 String objectId = entry.getKey();
                 JsonObject objectData = entry.getValue().getAsJsonObject();
-                int type = objectData.get("type").getAsInt();
-                ObjectTypes objectType = ObjectTypes.fromId(type);
-                GameObject gameObject = switch (objectType) {
-                    case TANK -> this.serializer.readTank(objectId, objectData);
-                    case BULLET -> this.serializer.readBullet(objectId, objectData);
-                    case WALL -> this.serializer.readWall(objectId, objectData);
-                    case BOUNDARY -> this.serializer.readBoundary(objectId, objectData);
-                    case POWERUP -> this.serializer.readPowerup(objectId, objectData);
-                    case DESTRUCTIBLE_WALL -> this.serializer.readDestructibleWall(objectId, objectData);
-                    case CLOSING_BOUNDARY -> this.serializer.readClosingBoundary(objectId, objectData);
-                };
+                GameObject gameObject = readNewObject(objectId, objectData);
                 if (gameObject != null) {
                     this.gameMap.addObject(gameObject);
                 }
@@ -94,60 +94,63 @@ public class Game {
 
     public boolean readNextTurnData() {
         // Read the next turn message
-        this.currentTurnMessage = Comms.readMessage();
+        JsonElement currentTurnMessage = Comms.readMessage();
 
-        if (this.currentTurnMessage.isJsonPrimitive()
-                && this.currentTurnMessage.getAsString().equals(Comms.END_SIGNAL)) {
+        if (currentTurnMessage.isJsonPrimitive()
+                && currentTurnMessage.getAsString().equals(Comms.END_SIGNAL)) {
             return false;
         }
 
         Collection<String> deletedObjectIds = new ArrayList<>();
         // Delete objects that have been removed
-        for (JsonElement deletedObjectId :
-                this.currentTurnMessage
-                        .getAsJsonObject()
-                        .getAsJsonObject("message")
-                        .getAsJsonArray("deleted_objects")) {
-
+        for (JsonElement deletedObjectId : currentTurnMessage
+                .getAsJsonObject()
+                .getAsJsonObject("message")
+                .getAsJsonArray("deleted_objects")) {
             String id = deletedObjectId.getAsString();
             deletedObjectIds.add(id);
         }
 
-        Map<String, JsonObject> updatedGameObjects = new HashMap<>();
+        Map<String, GameObject> updatedGameObjects = new HashMap<>();
+        Map<String, GameObject> addedGameObjects = new HashMap<>();
         // Update objects with new or updated data
-        JsonObject updatedObjects =
-                this.currentTurnMessage
-                        .getAsJsonObject()
-                        .getAsJsonObject("message")
-                        .getAsJsonObject("updated_objects");
+        JsonObject updatedObjects = currentTurnMessage.getAsJsonObject()
+                .getAsJsonObject("message")
+                .getAsJsonObject("updated_objects");
+
         for (Map.Entry<String, JsonElement> entry : updatedObjects.entrySet()) {
             JsonObject objectData = entry.getValue().getAsJsonObject();
-            updatedGameObjects.put(entry.getKey(), objectData);
-            if (objectData.get("type").getAsInt() == ObjectTypes.POWERUP.getValue()) {
-                Powerup powerup = this.serializer.readPowerup(entry.getKey(), objectData);
-                this.gameMap.addObject(powerup);
+            if (this.gameMap.containsObject(entry.getKey())) {
+                GameObject updated = updateExistingObject(entry.getKey(), objectData);
+                updatedGameObjects.put(entry.getKey(), updated);
+            } else {
+                GameObject newObject = readNewObject(entry.getKey(), objectData);
+                addedGameObjects.put(entry.getKey(), newObject);
             }
         }
 
-        ChangeEvent changeEvent = new ChangeEvent(this, deletedObjectIds, updatedGameObjects);
+        ChangeEvent changeEvent = new ChangeEvent(this, deletedObjectIds, updatedGameObjects, addedGameObjects);
         this.eventOrchestrator.callEvent(changeEvent);
 
         for (String deleted : deletedObjectIds) {
             this.gameMap.removeObject(deleted);
         }
+        for (GameObject gameObject : addedGameObjects.values()) {
+            this.gameMap.addObject(gameObject);
+        }
         return true;
     }
+
 
     public void respondToTurn() {
         // Write your code here... For demonstration, this bot just shoots randomly every turn.
 
         // Create the message with the shoot angle
-        JsonObject message = new JsonObject();
-        if (!tryChasePowerup(message) && !tryShootEnemyTank(message)) {
-            tryChaseEnemyTank(message);
-        }
+        OutboundMessage message = ResponseGenerator.chain(new ChasePowerupResponse(), new ShootEnemyResponse(), new ChasePowerupResponse())
+                .generateMessage(this).orElse(OutboundMessage.EMPTY_RESPONSE);
+
         // Send the message
-        Comms.postMessage(message);
+        Comms.postMessage(message.toJson());
     }
 
     private Powerup findClosestPowerUp() {
@@ -163,6 +166,33 @@ public class Game {
                 .map(Powerup.class::cast)
                 .findFirst()
                 .orElse(null);
+    }
+
+    private GameObject readNewObject(String objectId, JsonObject objectData) {
+        int type = objectData.get("type").getAsInt();
+        ObjectTypes objectType = ObjectTypes.fromId(type);
+        return switch (objectType) {
+            case TANK -> this.serializer.readTank(objectId, objectData);
+            case BULLET -> this.serializer.readBullet(objectId, objectData);
+            case WALL -> this.serializer.readWall(objectId, objectData);
+            case BOUNDARY -> this.serializer.readBoundary(objectId, objectData);
+            case POWERUP -> this.serializer.readPowerup(objectId, objectData);
+            case DESTRUCTIBLE_WALL -> this.serializer.readDestructibleWall(objectId, objectData);
+            case CLOSING_BOUNDARY -> this.serializer.readClosingBoundary(objectId, objectData);
+        };
+    }
+
+    private GameObject updateExistingObject(String objectId, JsonObject objectData) {
+        int type = objectData.get("type").getAsInt();
+        ObjectTypes objectType = ObjectTypes.fromId(type);
+        GameObject existing = this.gameMap.getObject(objectId);
+        switch (objectType) {
+            case TANK -> this.serializer.updateTank((Tank) existing, objectData);
+            case BULLET -> this.serializer.updateBullet((Bullet) existing, objectData);
+            case DESTRUCTIBLE_WALL -> this.serializer.updateDestructibleWall((DestructibleWall) existing, objectData);
+            case CLOSING_BOUNDARY -> this.serializer.updateClosingBoundary((ClosingBoundary) existing, objectData);
+        }
+        return existing;
     }
 
     private boolean tryChasePowerup(JsonObject message) {

@@ -48,7 +48,7 @@ public class Serializer {
 
     public void updateClosingBoundary(ClosingBoundary existing, JsonObject update) {
         BoundingBox updated = readBoundingBox(update.get("position").getAsJsonArray());
-        existing.hitboxComponent().value(updated);
+        existing.hitbox(updated);
     }
 
     public Wall readWall(String id, JsonObject object) {
@@ -69,7 +69,7 @@ public class Serializer {
     public void updateDestructibleWall(DestructibleWall existing, JsonObject update) {
         if (update.has("position")) {
             BoundingBox updated = readBoundingBox(update.get("position").getAsJsonArray());
-            existing.hitboxComponent().value(updated);
+            existing.hitbox(updated);
         }
         if (update.has("hp")) {
             existing.healthComponent().health(update.get("hp").getAsInt());
@@ -92,19 +92,20 @@ public class Serializer {
     public void updateTank(Tank existing, JsonObject update) {
         if (update.has("position")) {
             DoublePair updated = readDoublePair(update.get("position").getAsJsonArray());
-            Hitbox existingHitbox = existing.hitboxComponent().value();
-            existing.hitboxComponent().value(existingHitbox.reCentered(updated));
+            Hitbox existingHitbox = existing.hitbox();
+            existing.hitbox(existingHitbox.reCentered(updated));
         }
         if (update.has("velocity")) {
             DoublePair updated = readDoublePair(update.get("velocity").getAsJsonArray());
-            existing.velocityComponent().value(updated);
+            existing.velocity(updated);
         }
         if (update.has("hp")) {
             existing.healthComponent().health(update.get("hp").getAsInt());
         }
         if (update.has("powerups")) {
             Set<TankAspect> aspects = readTankAspects(update.getAsJsonArray("powerups"));
-            existing.powerupsComponent().value(aspects);
+            existing.powerups().clear();
+            existing.powerups().addAll(aspects);
         }
     }
 
@@ -124,16 +125,16 @@ public class Serializer {
     public void updateBullet(Bullet existing, JsonObject update) {
         if (update.has("position")) {
             DoublePair updated = readDoublePair(update.get("position").getAsJsonArray());
-            Hitbox existingHitbox = existing.hitboxComponent().value();
-            existing.hitboxComponent().value(existingHitbox.reCentered(updated));
+            Hitbox existingHitbox = existing.hitbox();
+            existing.hitbox(existingHitbox.reCentered(updated));
         }
         if (update.has("velocity")) {
             DoublePair updated = readDoublePair(update.get("velocity").getAsJsonArray());
-            existing.velocityComponent().value(updated);
+            existing.velocity(updated);
         }
         if (update.has("damage")) {
             int damage = update.get("damage").getAsInt();
-            existing.damageComponent().value(damage);
+            existing.damage(damage);
         }
     }
 

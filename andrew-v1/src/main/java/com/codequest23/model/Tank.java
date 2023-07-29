@@ -13,7 +13,7 @@ public final class Tank implements GameObject {
     private final String objectId;
     private final HealthComponent healthComponent;
     private final Set<TankAspect> powerups = EnumSet.noneOf(TankAspect.class);
-    private final DoublePair velocity;
+    private DoublePair velocity;
     private Hitbox hitbox;
 
     public Tank(String objectId,
@@ -40,6 +40,10 @@ public final class Tank implements GameObject {
 
     public DoublePair velocity() {
         return velocity;
+    }
+
+    public void velocity(DoublePair velocity) {
+        this.velocity = velocity;
     }
 
     @Override

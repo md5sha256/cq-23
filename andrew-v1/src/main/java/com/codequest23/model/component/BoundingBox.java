@@ -72,8 +72,10 @@ public class BoundingBox implements Hitbox {
 
     @Override
     public boolean intersects(DoublePair position) {
-        double x = position.x();
-        double y = position.y();
+        return intersects(position.x(), position.y());
+    }
+
+    public boolean intersects(double x, double y) {
         return x >= this.minX && x <= this.maxX && y >= this.minY && y <= this.maxY;
     }
 
@@ -93,5 +95,20 @@ public class BoundingBox implements Hitbox {
         double xWidth = this.maxX - this.minX;
         double yWidth = this.maxY - this.minY;
         return BoundingBox.ofRectangle(xWidth, yWidth, centre);
+    }
+
+    @Override
+    public BoundingBox asBoundingBox() {
+
+        return this;
+    }
+
+    public boolean intersectsLine(double gradient, double yIntercept) {
+        double expectedY = gradient * this.minX + yIntercept;
+        if (intersects(this.minX, expectedY)) {
+            return true;
+        }
+        expectedY = gradient * this.maxX + yIntercept;
+        return intersects(this.maxX, expectedY);
     }
 }

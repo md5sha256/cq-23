@@ -10,4 +10,6 @@ public interface Hitbox {
 
     Hitbox reCentered(DoublePair centre);
 
+    BoundingBox asBoundingBox();
+
 }

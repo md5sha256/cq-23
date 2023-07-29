@@ -2,6 +2,7 @@ package com.codequest23.model;
 
 import com.codequest23.model.component.HealthComponent;
 import com.codequest23.model.component.Hitbox;
+import com.codequest23.model.component.SimpleHealthComponent;
 
 public final class DestructibleWallBuilder {
     private final Hitbox hitbox;
