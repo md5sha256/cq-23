@@ -175,6 +175,7 @@ public class Game {
             JsonObject objectData = entry.getValue().getAsJsonObject();
             updatedGameObjects.put(entry.getKey(), objectData);
             if (objectData.get("type").getAsInt() == ObjectTypes.POWERUP.getValue()) {
+                System.err.println("found powerup");
                 Powerup powerup = this.serializer.readPowerup(entry.getKey(), objectData);
                 this.gameMap.addObject(powerup);
             }
