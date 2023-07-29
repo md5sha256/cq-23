@@ -175,7 +175,6 @@ public class Game {
             JsonObject objectData = entry.getValue().getAsJsonObject();
             updatedGameObjects.put(entry.getKey(), objectData);
             if (objectData.get("type").getAsInt() == ObjectTypes.POWERUP.getValue()) {
-                System.err.println("found powerup");
                 Powerup powerup = this.serializer.readPowerup(entry.getKey(), objectData);
                 this.gameMap.addObject(powerup);
             }
@@ -206,7 +205,9 @@ public class Game {
         Tank us = (Tank) this.gameMap.getObject(this.tankId);
         DoublePair ourPosition = us.shapeComponent().centre();
         Map<String, GameObject> powerups = this.gameMap.getObjectsByType(ObjectTypes.POWERUP);
+        System.err.println(powerups);
         ClosingBoundary boundary = (ClosingBoundary) this.gameMap.getObjectsByType(ObjectTypes.CLOSING_BOUNDARY).values().iterator().next();
+        System.err.println(boundary.shapeComponent().toString());
         ShapeComponent boundaryBoundingBox = boundary.shapeComponent();
         Comparator<GameObject> distanceComparator = Comparator.comparing(gameObject -> MathUtil.distanceSquared(ourPosition, gameObject.shapeComponent().centre()));
         return powerups.values().stream()
