@@ -68,6 +68,7 @@ public class Game {
                 JsonObject objectData = entry.getValue().getAsJsonObject();
                 int type = objectData.get("type").getAsInt();
                 ObjectTypes objectType = ObjectTypes.fromId(type);
+                System.err.println("Registering object type: " + objectType);
                 GameObject gameObject = switch (objectType) {
                     case TANK -> this.serializer.readTank(objectId, objectData);
                     case BULLET -> this.serializer.readBullet(objectId, objectData);
