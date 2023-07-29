@@ -1,8 +1,8 @@
 package io.github.md5sha256.codequest23;
 
 
-import com.codequest23.model.component.BoundingBox;
-import com.codequest23.util.DoublePair;
+import io.github.md5sha256.codequest23.model.component.BoundingBox;
+import io.github.md5sha256.codequest23.util.DoublePair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

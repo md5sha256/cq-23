@@ -1,5 +1,7 @@
 package com.codequest23;
 
+import io.github.md5sha256.codequest23.Game;
+
 public class Main {
     public static void main(String[] args) {
         // Create a new instance of the Game class
