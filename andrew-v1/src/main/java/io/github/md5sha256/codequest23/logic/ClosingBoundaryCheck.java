@@ -1,7 +1,7 @@
 package io.github.md5sha256.codequest23.logic;
 
 import io.github.md5sha256.codequest23.Game;
-import io.github.md5sha256.codequest23.message.MoveAction;
+import io.github.md5sha256.codequest23.message.PathAction;
 import io.github.md5sha256.codequest23.message.OutboundMessage;
 import io.github.md5sha256.codequest23.model.GameMap;
 import io.github.md5sha256.codequest23.model.Tank;
@@ -40,7 +40,7 @@ public class ClosingBoundaryCheck implements ResponseGenerator {
                 || MathUtil.distanceSquared(pos, top) < this.minimumDistanceSquared
                 || MathUtil.distanceSquared(pos, left) < this.minimumDistanceSquared
                 || MathUtil.distanceSquared(pos, right) < this.minimumDistanceSquared) {
-            return Optional.of(new MoveAction(boundary.centre()));
+            return Optional.of(new PathAction(boundary.centre()));
         }
         return Optional.ofNullable(this.next).flatMap(generator -> generator.generateMessage(game));
     }

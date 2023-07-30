@@ -11,7 +11,7 @@ import io.github.md5sha256.codequest23.logic.KeepDistanceResponse;
 import io.github.md5sha256.codequest23.logic.ResponseGenerator;
 import io.github.md5sha256.codequest23.logic.ShootEnemyResponse;
 import io.github.md5sha256.codequest23.message.Action;
-import io.github.md5sha256.codequest23.message.MoveAction;
+import io.github.md5sha256.codequest23.message.PathAction;
 import io.github.md5sha256.codequest23.message.OutboundMessage;
 import io.github.md5sha256.codequest23.model.Bullet;
 import io.github.md5sha256.codequest23.model.ClosingBoundary;
@@ -149,8 +149,8 @@ public class Game {
                         new ChaseEnemyResponse())
                 .generateMessage(this)
                 .orElse(OutboundMessage.EMPTY_RESPONSE);
-        if (message instanceof MoveAction nextMessage
-                && lastOutboundMessage instanceof MoveAction lastMessage
+        if (message instanceof PathAction nextMessage
+                && lastOutboundMessage instanceof PathAction lastMessage
                 && nextMessage.destination().equals(lastMessage.destination())) {
             // If we are already moving, try to take a shot if possible
             message = new ShootEnemyResponse(1000, new DirectShotStrategy(true))

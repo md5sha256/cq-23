@@ -1,7 +1,7 @@
 package io.github.md5sha256.codequest23.logic;
 
 import io.github.md5sha256.codequest23.Game;
-import io.github.md5sha256.codequest23.message.MoveAction;
+import io.github.md5sha256.codequest23.message.PathAction;
 import io.github.md5sha256.codequest23.message.OutboundMessage;
 import io.github.md5sha256.codequest23.model.GameMap;
 import io.github.md5sha256.codequest23.model.Tank;
@@ -18,6 +18,6 @@ public class ChaseEnemyResponse implements ResponseGenerator {
     public Optional<OutboundMessage> generateMessage(Game game) {
         GameMap map = game.map();
         Tank enemy = map.enemyTank();
-        return Optional.of(new MoveAction(enemy.hitbox().centre()));
+        return Optional.of(new PathAction(enemy.hitbox().centre()));
     }
 }
