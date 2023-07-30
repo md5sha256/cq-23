@@ -17,7 +17,7 @@ public class ShootEnemyResponse implements ResponseGenerator {
     private ResponseGenerator next;
 
     public ShootEnemyResponse(double maxDistance) {
-        this(maxDistance, ShootStrategyChain.chain(new WallSpacedShotFilter(80), new DirectShotStrategy(true), new BulldozeShotStrategy(4)));
+        this(maxDistance, ShootStrategyChain.chain(new WallSpacedShotFilter(60), new DirectShotStrategy(true), new BulldozeShotStrategy(4)));
     }
 
     public ShootEnemyResponse(double maxDistance, ShootStrategyChain shootStrategy) {

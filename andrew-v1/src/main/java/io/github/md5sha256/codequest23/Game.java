@@ -144,7 +144,7 @@ public class Game {
         OutboundMessage message = ResponseGenerator.chain(
                         boundaryCheck,
                         new BulletDodgeResponse(50),
-                        new ShootEnemyResponse(400, ShootStrategyChain.chain(new WallSpacedShotFilter(80), new DirectShotStrategy(true))),
+                        new ShootEnemyResponse(400, ShootStrategyChain.chain(new WallSpacedShotFilter(60), new DirectShotStrategy(true))),
                         new KeepDistanceResponse(100),
                         new ChasePowerupResponse(),
                         new ShootEnemyResponse(600),

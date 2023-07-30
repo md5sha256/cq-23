@@ -36,7 +36,7 @@ public class KeepDistanceResponse implements ResponseGenerator {
             return new ChaseEnemyResponse().generateMessage(game);
         }
         double angle = MathUtil.angleDegBetween(us.hitbox().centre(), enemy.hitbox().centre());
-        boolean nearestWall = map.streamWallObjects().anyMatch(map.inLineOfSight(us.hitbox().centre(), angle + 90, 80));
+        boolean nearestWall = map.streamWallObjects().anyMatch(map.inLineOfSight(us.hitbox().centre(), angle + 90, 160));
         if (nearestWall) {
             angle = angle - 90;
         } else {
