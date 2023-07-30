@@ -1,7 +1,7 @@
 package io.github.md5sha256.codequest23.logic;
 
 import io.github.md5sha256.codequest23.Game;
-import io.github.md5sha256.codequest23.message.PathAction;
+import io.github.md5sha256.codequest23.message.MoveAction;
 import io.github.md5sha256.codequest23.message.OutboundMessage;
 import io.github.md5sha256.codequest23.model.GameMap;
 import io.github.md5sha256.codequest23.model.Tank;
@@ -35,6 +35,13 @@ public class KeepDistanceResponse implements ResponseGenerator {
         if (isBlockedByWall) {
             return new ChaseEnemyResponse().generateMessage(game);
         }
-        return Optional.of(new PathAction(us.hitbox().centre()));
+        double angle = MathUtil.angleDegBetween(us.hitbox().centre(), enemy.hitbox().centre());
+        boolean nearestWall = map.streamWallObjects().anyMatch(map.inLineOfSight(us.hitbox().centre(), angle + 90, 80));
+        if (nearestWall) {
+            angle = angle - 90;
+        } else {
+            angle = angle + 90;
+        }
+        return Optional.of(new MoveAction(angle));
     }
 }

@@ -64,13 +64,11 @@ public class BulletDodgeResponse implements ResponseGenerator {
             break;
         }
         if (!changed) {
-            System.err.println("no bullets");
             return Optional.ofNullable(this.next).flatMap(generator -> generator.generateMessage(game));
         }
         // move 1 unit of distance away
         double gradient = trajectory.gradient();
-        double angle = Math.toDegrees(Math.atan(gradient));
-        System.err.println("moving angle: " + angle);
+        double angle = Math.toDegrees(Math.atan(-gradient));
         return Optional.of(new MoveAction(angle));
     }
 }

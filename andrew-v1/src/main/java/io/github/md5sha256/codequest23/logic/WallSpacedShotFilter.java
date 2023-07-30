@@ -32,7 +32,7 @@ public class WallSpacedShotFilter implements ShootStrategyChain {
         }
         DoublePair pos = us.hitbox().centre();
         boolean hasNearbyWall = map.streamObjectsByType(ObjectTypes.WALL)
-                .noneMatch(wall -> MathUtil.distanceSquared(pos, wall.hitbox().centre()) < this.minDistanceSquared);
+                .anyMatch(wall -> MathUtil.distanceSquared(pos, wall.hitbox().centre()) >= this.minDistanceSquared);
         if (hasNearbyWall) {
             return OptionalDouble.empty();
         }

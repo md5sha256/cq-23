@@ -2,6 +2,7 @@ package io.github.md5sha256.codequest23.model;
 
 import com.codequest23.ObjectTypes;
 import io.github.md5sha256.codequest23.model.component.BoundingBox;
+import io.github.md5sha256.codequest23.model.component.CircularHitbox;
 import io.github.md5sha256.codequest23.model.component.Hitbox;
 import io.github.md5sha256.codequest23.util.DoublePair;
 import io.github.md5sha256.codequest23.util.MathUtil;
@@ -85,6 +86,22 @@ public class GameMap {
     public <T extends GameObject> Predicate<T> inLineOfSight(DoublePair origin, DoublePair dest) {
         double gradient = MathUtil.gradient(origin, dest);
         BoundingBox checkBox = BoundingBox.ofCorners(origin, dest);
+        // y = mx + c, c = y - mx
+        double yIntercept = origin.y() - gradient * origin.x();
+        return (gameObject) -> {
+            Hitbox hitbox = gameObject.hitbox();
+            BoundingBox boundingBox = hitbox.asBoundingBox();
+            if (!checkBox.intersects(hitbox.centre())) {
+                return false;
+            }
+            return boundingBox.intersectsLine(gradient, yIntercept);
+        };
+
+    }
+
+    public <T extends GameObject> Predicate<T> inLineOfSight(DoublePair origin, double angleDeg, double distance) {
+        double gradient = Math.tan(Math.toDegrees(angleDeg));
+        Hitbox checkBox = new CircularHitbox(origin, distance);
         // y = mx + c, c = y - mx
         double yIntercept = origin.y() - gradient * origin.x();
         return (gameObject) -> {

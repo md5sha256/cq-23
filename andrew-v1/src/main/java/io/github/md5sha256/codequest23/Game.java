@@ -10,6 +10,8 @@ import io.github.md5sha256.codequest23.logic.DirectShotStrategy;
 import io.github.md5sha256.codequest23.logic.KeepDistanceResponse;
 import io.github.md5sha256.codequest23.logic.ResponseGenerator;
 import io.github.md5sha256.codequest23.logic.ShootEnemyResponse;
+import io.github.md5sha256.codequest23.logic.ShootStrategyChain;
+import io.github.md5sha256.codequest23.logic.WallSpacedShotFilter;
 import io.github.md5sha256.codequest23.message.Action;
 import io.github.md5sha256.codequest23.message.PathAction;
 import io.github.md5sha256.codequest23.message.OutboundMessage;
@@ -142,10 +144,10 @@ public class Game {
         OutboundMessage message = ResponseGenerator.chain(
                         boundaryCheck,
                         new BulletDodgeResponse(50),
-                        new ShootEnemyResponse(600, new DirectShotStrategy(true)),
+                        new ShootEnemyResponse(400, ShootStrategyChain.chain(new WallSpacedShotFilter(80), new DirectShotStrategy(true))),
                         new KeepDistanceResponse(100),
                         new ChasePowerupResponse(),
-                        new ShootEnemyResponse(1000),
+                        new ShootEnemyResponse(600),
                         new ChaseEnemyResponse())
                 .generateMessage(this)
                 .orElse(OutboundMessage.EMPTY_RESPONSE);
@@ -153,7 +155,7 @@ public class Game {
                 && lastOutboundMessage instanceof PathAction lastMessage
                 && nextMessage.destination().equals(lastMessage.destination())) {
             // If we are already moving, try to take a shot if possible
-            message = new ShootEnemyResponse(1000, new DirectShotStrategy(true))
+            message = new ShootEnemyResponse(600, new DirectShotStrategy(true))
                     .generateMessage(this)
                     .orElseGet(() -> boundaryCheck.generateMessage(this).orElse(OutboundMessage.EMPTY_RESPONSE));
         }
